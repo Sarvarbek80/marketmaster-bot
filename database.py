@@ -2,7 +2,7 @@ import sqlite3
 import os
 from datetime import datetime
 
-DB_PATH = "bot.db"
+DB_PATH = "/app/data/bot.db"
 
 
 def get_conn():
