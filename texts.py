@@ -5,18 +5,16 @@ WELCOME = """👋 Assalomu alaykum, {name}!
 Uzum Market kursiga xush kelibsiz! 🎉
 
 Bu kurs orqali siz:
-🎁 16 ta video dars
-🎁 Xitoy sourcing bonusi (1688 & Pinduoduo)
+🎁 Uzum marketda 0 dan ishlash
+🎁 Xitoy bozorlari bilan ishlash bonusi 
 🎁 Kurator yordami
-🎁 Jonli efirlar
-
-...dan to'liq bahramand bo'lasiz!
+🎁 Jonli efirlar 
 
 Quyidagilardan birini tanlang 👇"""
 
 COURSE_INFO = """📚 <b>UZUM MARKET KURSI</b>
 
-Kurs 5 ta moduldan iborat — 16 ta video dars:
+Kurs 5 ta moduldan iborat — har bir modulda amaliy darslar va bonuslar mavjud!
 
 <b>📌 Modul 1 — Boshlash</b>
 • YATT ochish
@@ -58,19 +56,18 @@ Ha, kurs to'liq online — O'zbekistonning istalgan joyidan!
 Umrbod kirish huquqi beriladi.
 
 <b>💳 Bo'lib to'lash bormi?</b>
-Ha, 2 qismda to'lash mumkin. Admin bilan bog'laning.
+afsuski hozirda mavjud emas.
 
 <b>🏆 Natija kafolati bormi?</b>
 Amaliyot qilinsa natija bo'ladi. O'quvchilarimiz oyiga 3-10 mln so'm daromad olmoqda.
 
 <b>🚀 Kurs qachon boshlanadi?</b>
-Cohort sanasidan boshlanadi. Ro'yxatdan o'ting — xabar beramiz!"""
+guruhga qo'shilishingiz bilan. Ro'yxatdan o'ting — xabar beramiz!"""
 
 TARIF_STANDART = """🥉 <b>STANDART TARIF</b>
 💰 <b>{price} so'm</b>
 
-✅ 16 ta video dars
-✅ Xitoy sourcing bonusi
+✅ 0 dan video darslar
 ✅ Umrbod kirish
 ✅ Telegram guruh
 
@@ -81,8 +78,8 @@ Bu tarif Uzum Marketni o'rganib, mustaqil boshlashni xohlaganlar uchun."""
 TARIF_OPTIMAL = """🥈 <b>OPTIMAL TARIF</b>
 💰 <b>{price} so'm</b>
 
-✅ 16 ta video dars
-✅ Xitoy sourcing bonusi
+✅ 0 dan video dars
+✅ Xitoy bozorlari bilan ishlash bonusi
 ✅ Umrbod kirish
 ✅ Telegram guruh
 ✅ Kurator yordami (30 kun)
@@ -96,8 +93,8 @@ Bu tarif tez natija olishni va savol-javob bo'lishini xohlaganlar uchun."""
 TARIF_VIP = """👑 <b>VIP TARIF</b>
 💰 <b>{price} so'm</b>
 
-✅ 16 ta video dars
-✅ Xitoy sourcing bonusi
+✅ 0 dan video darslar
+✅ Xitoy bozorlari bilan ishlash bonusi
 ✅ Umrbod kirish
 ✅ Telegram guruh
 ✅ Kurator yordami (90 kun)
@@ -129,7 +126,7 @@ CHECK_RECEIVED = """✅ Chekingiz qabul qilindi!
 
 ⏳ 30 daqiqa ichida tekshiriladi va sizga guruh linki yuboriladi.
 
-Savolingiz bo'lsa: @admin_username"""
+Savolingiz bo'lsa: @marketmaster_uzb"""
 
 PAYMENT_APPROVED = """🎉 <b>Tabriklaymiz!</b>
 
@@ -177,6 +174,6 @@ Savolingiz bo'lsa doim yozib qolinavering."""
 
 CARD_TEXT = """🏦 Karta raqami:
 
-<code>{card}</code>
+<code>{23425345242542452345234523435}</code>
 
 Yuqoridagi raqamga {price} so'm o'tkazing va chekni yuboring."""
