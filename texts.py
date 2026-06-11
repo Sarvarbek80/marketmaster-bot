@@ -172,7 +172,7 @@ UPSELL_NO = """✅ Tushunarli! Optimal tarifdan mamnun bo'lishingizni tilaymiz! 
 
 Savolingiz bo'lsa doim yozib qolinavering."""
 
-CARD_TEXT = """🏦 Karta raqami: 123413412515143132
+CARD_TEXT = """🏦 Karta raqami:
 
 <code>{card}</code>
 
