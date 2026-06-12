@@ -140,13 +140,6 @@ async def select_tarif(call: CallbackQuery):
 @router.callback_query(F.data == "show_card")
 async def show_card(call: CallbackQuery):
     card = db.get_setting("card_number")
-    user = db.get_user(call.from_user.id)
-    tarif = user.get("selected_tarif", "standart") if user else "standart"
-    prices = {
-        "standart": db.get_setting("price_standart"),
-        "optimal": db.get_setting("price_optimal"),
-        "vip": db.get_setting("price_vip"),
-    }
     await call.answer(f"Karta: {card}", show_alert=True)
 
 
@@ -165,18 +158,18 @@ async def receive_check(msg: Message, state: FSMContext, bot):
     db.update_user_status(msg.from_user.id, "check_sent")
     await state.clear()
 
-    # Find the order for this user
     user = db.get_user(msg.from_user.id)
     tarif = user.get("selected_tarif", "—") if user else "—"
     tarif_names = {"standart": "Standart", "optimal": "Optimal", "vip": "VIP"}
 
-    # Get order id
-    import database as database_module
-    conn = database_module.get_conn()
-    order = conn.execute(
-        "SELECT id FROM orders WHERE tg_id=? AND status='check_sent' ORDER BY id DESC LIMIT 1",
+    # Order ID ni olish - PostgreSQL cursor bilan
+    conn = db.get_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT id FROM orders WHERE tg_id=%s AND status='check_sent' ORDER BY id DESC LIMIT 1",
         (msg.from_user.id,)
-    ).fetchone()
+    )
+    order = c.fetchone()
     conn.close()
     order_id = order["id"] if order else 0
 
