@@ -5,3 +5,4 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
+CHECKS_CHANNEL_ID = -1004423535951

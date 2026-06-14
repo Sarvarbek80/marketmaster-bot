@@ -7,7 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 import database as db
 import keyboards as kb
 import texts as tx
-from config import ADMIN_ID
+from config import ADMIN_ID, CHECKS_CHANNEL_ID
 
 router = Router()
 
@@ -162,7 +162,6 @@ async def receive_check(msg: Message, state: FSMContext, bot):
     tarif = user.get("selected_tarif", "—") if user else "—"
     tarif_names = {"standart": "Standart", "optimal": "Optimal", "vip": "VIP"}
 
-    # Order ID ni olish - PostgreSQL cursor bilan
     conn = db.get_conn()
     c = conn.cursor()
     c.execute(
@@ -184,11 +183,20 @@ async def receive_check(msg: Message, state: FSMContext, bot):
         f"🆔 Zakaz ID: #{order_id}"
     )
 
+    # Adminga yuborish
     await bot.send_photo(
         ADMIN_ID,
         photo=file_id,
         caption=admin_text,
         reply_markup=kb.admin_order_kb(order_id),
+        parse_mode="HTML"
+    )
+
+    # Cheklar kanaliga yuborish
+    await bot.send_photo(
+        CHECKS_CHANNEL_ID,
+        photo=file_id,
+        caption=admin_text,
         parse_mode="HTML"
     )
 
