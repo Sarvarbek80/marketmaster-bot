@@ -41,7 +41,7 @@ def tarif_detail_kb(tarif):
     ])
 
 
-ddef payment_methods_kb(card, click_url, payme_url):
+def payment_methods_kb(card, click_url, payme_url):
     buttons = []
     if click_url:
         buttons.append([InlineKeyboardButton(text="💳 Click orqali to'lash", url=click_url)])
