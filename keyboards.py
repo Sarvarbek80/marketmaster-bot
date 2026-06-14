@@ -41,14 +41,13 @@ def tarif_detail_kb(tarif):
     ])
 
 
-def payment_methods_kb(card, click_url, payme_url):
+ddef payment_methods_kb(card, click_url, payme_url):
     buttons = []
     if click_url:
         buttons.append([InlineKeyboardButton(text="💳 Click orqali to'lash", url=click_url)])
     if payme_url:
         buttons.append([InlineKeyboardButton(text="💳 Payme orqali to'lash", url=payme_url)])
-    if card:
-        buttons.append([InlineKeyboardButton(text=f"🏦 Karta raqami: {card}", callback_data="show_card")])
+    buttons.append([InlineKeyboardButton(text="🏦 9860 3501 4375 2649 — Sarvarbek Ganijonov", callback_data="show_card")])
     buttons.append([InlineKeyboardButton(text="✅ To'lovni amalga oshirdim", callback_data="payment_done")])
     buttons.append([InlineKeyboardButton(text="🏠 Bosh menyu", callback_data="main_menu")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
