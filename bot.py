@@ -11,8 +11,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import CommandStart, Command
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import asyncpg
 
 load_dotenv()
 
@@ -36,62 +35,55 @@ KURS_TAVSIF = (
 )
 # ════════════════════════════════════════
 
+db_pool = None
 
-# ─── DATABASE (PostgreSQL) ─────────────
-def get_db():
-    return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=RealDictCursor)
+async def init_db():
+    global db_pool
+    db_pool = await asyncpg.create_pool(os.getenv("DATABASE_URL"))
+    async with db_pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id         SERIAL PRIMARY KEY,
+                tg_id      BIGINT,
+                username   TEXT,
+                full_name  TEXT,
+                status     TEXT DEFAULT 'pending',
+                file_id    TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-def init_db():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            id         SERIAL PRIMARY KEY,
-            tg_id      BIGINT,
-            username   TEXT,
-            full_name  TEXT,
-            status     TEXT DEFAULT 'pending',
-            file_id    TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+async def new_order(tg_id, username, full_name):
+    async with db_pool.acquire() as conn:
+        await conn.execute("DELETE FROM orders WHERE tg_id=$1 AND status='pending'", tg_id)
+        row = await conn.fetchrow(
+            "INSERT INTO orders (tg_id, username, full_name) VALUES ($1, $2, $3) RETURNING id",
+            tg_id, username, full_name
         )
-    """)
-    conn.commit()
-    conn.close()
+        return row["id"]
 
-def new_order(tg_id, username, full_name):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM orders WHERE tg_id=%s AND status='pending'", (tg_id,))
-    c.execute(
-        "INSERT INTO orders (tg_id, username, full_name) VALUES (%s, %s, %s) RETURNING id",
-        (tg_id, username, full_name)
-    )
-    order_id = c.fetchone()["id"]
-    conn.commit()
-    conn.close()
-    return order_id
+async def save_check(order_id, file_id):
+    async with db_pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE orders SET file_id=$1, status='check_sent' WHERE id=$2",
+            file_id, order_id
+        )
 
-def save_check(order_id, file_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE orders SET file_id=%s, status='check_sent' WHERE id=%s", (file_id, order_id))
-    conn.commit()
-    conn.close()
+async def get_order(order_id):
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM orders WHERE id=$1", order_id)
+        return dict(row) if row else None
 
-def get_order(order_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM orders WHERE id=%s", (order_id,))
-    row = c.fetchone()
-    conn.close()
-    return dict(row) if row else None
+async def set_status(order_id, status):
+    async with db_pool.acquire() as conn:
+        await conn.execute("UPDATE orders SET status=$1 WHERE id=$2", status, order_id)
 
-def set_status(order_id, status):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE orders SET status=%s WHERE id=%s", (status, order_id))
-    conn.commit()
-    conn.close()
+async def get_stats():
+    async with db_pool.acquire() as conn:
+        total    = await conn.fetchval("SELECT COUNT(*) FROM orders")
+        approved = await conn.fetchval("SELECT COUNT(*) FROM orders WHERE status='approved'")
+        pending  = await conn.fetchval("SELECT COUNT(*) FROM orders WHERE status='check_sent'")
+        return total, approved, pending
 
 
 # ─── KEYBOARDS ────────────────────────
@@ -139,7 +131,7 @@ async def start(msg: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "buy")
 async def buy(cq: CallbackQuery, state: FSMContext):
-    order_id = new_order(cq.from_user.id, cq.from_user.username or "", cq.from_user.full_name)
+    order_id = await new_order(cq.from_user.id, cq.from_user.username or "", cq.from_user.full_name)
     await state.update_data(order_id=order_id)
     await cq.message.edit_text(
         f"💳 <b>To'lov ma'lumotlari</b>\n\n"
@@ -165,7 +157,7 @@ async def got_check(msg: Message, state: FSMContext):
     data     = await state.get_data()
     order_id = data["order_id"]
     file_id  = msg.photo[-1].file_id
-    save_check(order_id, file_id)
+    await save_check(order_id, file_id)
     await state.clear()
 
     await msg.answer("✅ Chek qabul qilindi! Tez orada tekshiriladi.")
@@ -195,11 +187,11 @@ async def approve(cq: CallbackQuery):
     if cq.from_user.id != ADMIN_ID:
         return await cq.answer("Ruxsat yo'q!", show_alert=True)
     order_id = int(cq.data.split("_")[1])
-    order = get_order(order_id)
+    order = await get_order(order_id)
     if not order or order["status"] == "approved":
         return await cq.answer("Allaqachon tasdiqlangan!", show_alert=True)
 
-    set_status(order_id, "approved")
+    await set_status(order_id, "approved")
     text = "🎉 <b>To'lovingiz tasdiqlandi!</b>\n\n"
     text += f"Guruhga qo'shilish:\n👉 {GROUP_LINK}" if GROUP_LINK else "Tez orada guruh linki yuboriladi."
     await bot.send_message(order["tg_id"], text)
@@ -212,11 +204,11 @@ async def reject(cq: CallbackQuery):
     if cq.from_user.id != ADMIN_ID:
         return await cq.answer("Ruxsat yo'q!", show_alert=True)
     order_id = int(cq.data.split("_")[1])
-    order = get_order(order_id)
+    order = await get_order(order_id)
     if not order:
         return await cq.answer("Topilmadi!", show_alert=True)
 
-    set_status(order_id, "rejected")
+    await set_status(order_id, "rejected")
     await bot.send_message(order["tg_id"], "❌ To'lov tasdiqlanmadi. Chekni qayta yuboring.")
     await cq.message.edit_caption(cq.message.caption + "\n\n❌ RAD ETILDI")
     await cq.answer("❌")
@@ -224,15 +216,7 @@ async def reject(cq: CallbackQuery):
 
 @dp.message(Command("stats"), F.from_user.id == ADMIN_ID)
 async def stats(msg: Message):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) as c FROM orders")
-    total = c.fetchone()["c"]
-    c.execute("SELECT COUNT(*) as c FROM orders WHERE status='approved'")
-    approved = c.fetchone()["c"]
-    c.execute("SELECT COUNT(*) as c FROM orders WHERE status='check_sent'")
-    pending = c.fetchone()["c"]
-    conn.close()
+    total, approved, pending = await get_stats()
     await msg.answer(
         f"📊 Jami: <b>{total}</b>\n"
         f"✅ Tasdiqlangan: <b>{approved}</b>\n"
@@ -242,7 +226,7 @@ async def stats(msg: Message):
 
 # ─── MAIN ─────────────────────────────
 async def main():
-    init_db()
+    await init_db()
     logging.basicConfig(level=logging.WARNING)
     logging.warning("🚀 Bot ishga tushdi!")
     await dp.start_polling(bot, allowed_updates=["message", "callback_query"])
