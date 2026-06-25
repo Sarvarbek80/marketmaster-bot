@@ -26,7 +26,7 @@ CARD_NUMBER = os.getenv("CARD_NUMBER", "0000 0000 0000 0000")
 CARD_OWNER  = os.getenv("CARD_OWNER", "Ism Familiya")
 
 KURS_NOMI   = "Uzum Market Kursi"
-KURS_NARXI  = 299_000
+KURS_NARXI  = 99_000
 KURS_TAVSIF = (
     "✅ 0 dan video darslar\n"
     "✅ Umrbod kirish\n"
